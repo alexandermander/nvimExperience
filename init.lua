@@ -39,7 +39,7 @@ vim.keymap.set("v", "<leader>q", function()
 end, { desc = "Text-to-Speech with edge-playback", silent = true })
 
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "tex", "plaintex", "bib", "markdown" },
+  pattern = { "tex", "plaintex", "bib" },
   callback = function()
 	vim.cmd("set spell")
 	vim.opt_local.spelllang = "da"
@@ -54,6 +54,24 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.textwidth = 70
     vim.opt_local.colorcolumn = "70"
     vim.opt_local.formatoptions:append("t")
+  end
+})
+
+
+
+-- if the fikle type is .glsl then the colorcolumn onedark
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { ".glsl" },
+	-- add this leader>r # python shadertoy-render.py .\first.glsl --size=655x1030
+	vim.keymap.set("n", "<leader>r", function()
+		local file = vim.fn.expand("%:p")
+		local cmd = "python shadertoy-render.py " .. file .. " --size=655x1030"
+		vim.fn.jobstart(cmd, { detach = false })
+		vim.notify("Rendering shader: " .. file, vim.log.levels.INFO)
+	end, { desc = "Render ShaderToy shader", silent = true }),
+
+  callback = function()
+	vim.cmd.colorscheme("onedark")
   end
 })
 

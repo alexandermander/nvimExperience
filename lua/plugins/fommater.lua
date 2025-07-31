@@ -7,21 +7,23 @@ return {
 
       null_ls.setup({
         sources = {
-          -- Configure Prettier as a formatter for TypeScript, TSX, JS, JSX
           null_ls.builtins.formatting.prettier.with({
-            filetypes = { "javascript", "typescript", "typescriptreact", "javascriptreact" },
+            filetypes = {
+              "javascript",
+              "typescript",
+              "typescriptreact",
+              "javascriptreact",
+              "html", -- ✅ HTML support
+            },
           }),
         },
-        -- You can also set a border or other options here if desired
       })
 
-      -- Optional: Automatically format on save for these filetypes
-      vim.api.nvim_create_autocmd("BufWritePre", {
-        pattern = { "*.js", "*.jsx", "*.ts", "*.tsx" },
-        callback = function()
-          vim.lsp.buf.format()
-        end,
-      })
+      -- ✅ Map <Leader>f to format the buffer
+      vim.keymap.set("n", "<Leader>f", function()
+        vim.lsp.buf.format({ async = true })
+      end, { desc = "Format file", noremap = true, silent = true })
     end,
   },
 }
+

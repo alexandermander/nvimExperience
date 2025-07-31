@@ -13,7 +13,7 @@ return {
 
       local lspconfig = require("lspconfig")
 
-      local servers = { "clangd", "rust_analyzer", "pyright", "ts_ls", "omnisharp", "html", "gopls", "texlab" }
+      local servers = { "clangd", "rust_analyzer", "pyright", "ts_ls", "omnisharp", "html", "gopls", "texlab", "wgsl_analyzer", "glsl_analyzer" }
 
       for _, lsp in ipairs(servers) do
         lspconfig[lsp].setup({
