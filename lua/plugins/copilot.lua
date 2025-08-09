@@ -10,6 +10,7 @@ return{
           auto_trigger = true,
           keymap = {
             accept = '<Tab>', -- Set Tab key to accept Copilot suggestion
+
           },
         },
       }

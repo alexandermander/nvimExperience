@@ -8,58 +8,61 @@ return {
       "L3MON4D3/LuaSnip",
     },
     config = function()
-      -- Setup capabilities for nvim-cmp completion
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
       local lspconfig = require("lspconfig")
 
-      local servers = { "clangd", "rust_analyzer", "pyright", "ts_ls", "omnisharp", "html", "gopls", "texlab", "wgsl_analyzer", "glsl_analyzer" }
+      -- Capabilities (cmp + snippets)
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      capabilities.textDocument.completion.completionItem.snippetSupport = true
+      capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities)
 
-      for _, lsp in ipairs(servers) do
-        lspconfig[lsp].setup({
+      -- Per-server options (only override what’s needed)
+      local servers = {
+        clangd = {},
+        rust_analyzer = {},
+        pyright = {},
+        ts_ls = {},
+        omnisharp = {},
+        html = {}, -- snippetSupport already in capabilities above
+        texlab = {},
+        wgsl_analyzer = {},
+        glsl_analyzer = {},
+        gopls = {
+          settings = {
+            gopls = {
+              completeUnimported = true,
+              usePlaceholders = true,
+              analyses = { unusedparams = true },
+              staticcheck = true,
+            },
+          },
+        },
+      }
+
+      for name, opts in pairs(servers) do
+        lspconfig[name].setup(vim.tbl_deep_extend("force", {
           capabilities = capabilities,
-        })
+        }, opts))
       end
 
-			lspconfig.gopls.setup({
-  capabilities = capabilities,
-  settings = {
-    gopls = {
-      completeUnimported = true,
-      usePlaceholders = true,
-      analyses = {
-        unusedparams = true,
-      },
-      staticcheck = true,
-    },
-  },
-})
-
-      -- For HTML snippet support
-      local html_capabilities = vim.lsp.protocol.make_client_capabilities()
-      html_capabilities.textDocument.completion.completionItem.snippetSupport = true
-      lspconfig.html.setup({
-        capabilities = html_capabilities,
-      })
-
-      -- LSP keybindings
+      -- LSP keymaps on attach
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspConfig", {}),
         callback = function(ev)
           local opts = { buffer = ev.buf }
           vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
-		  vim.keymap.set("n", "gd", vim.lsp.buf.definition,opts)
+          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
           vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
           vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
           vim.keymap.set("n", "<space>D", vim.lsp.buf.type_definition, opts)
           vim.keymap.set("n", "<space>rn", vim.lsp.buf.rename, opts)
           vim.keymap.set({ "n", "v" }, "<space>ca", vim.lsp.buf.code_action, opts)
-			vim.keymap.set("n", "<leader>fd", function()
-		  require("telescope.builtin").lsp_document_symbols({
-			symbols = { "Function", "Method" },
-			  })
-			end, { desc = "Telescope LSP functions only", buffer = ev.buf })
 
+          -- Telescope: only functions/methods
+          vim.keymap.set("n", "<leader>fd", function()
+            require("telescope.builtin").lsp_document_symbols({
+              symbols = { "Function", "Method" },
+            })
+          end, { desc = "Telescope LSP functions only", buffer = ev.buf })
         end,
       })
     end,
@@ -71,7 +74,9 @@ return {
     dependencies = {
       "hrsh7th/cmp-nvim-lsp",
       "L3MON4D3/LuaSnip",
-	  "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "saadparwaiz1/cmp_luasnip",
     },
     config = function()
       local cmp = require("cmp")
@@ -80,54 +85,29 @@ return {
       cmp.setup({
         snippet = {
           expand = function(args)
-            -- If you use LuaSnip, expand here:
-            -- luasnip.lsp_expand(args.body)
+            -- Enable LuaSnip expansion
+            luasnip.lsp_expand(args.body)
           end,
         },
         window = {
-          completion = cmp.config.window.bordered("rounded"),
+          completion = cmp.config.window.bordered(),
           documentation = cmp.config.window.bordered(),
         },
         mapping = cmp.mapping.preset.insert({
           ["<C-u>"] = cmp.mapping.scroll_docs(-4),
           ["<C-d>"] = cmp.mapping.scroll_docs(4),
-          ["<C-y>"] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = true,
-          }),
           ["<C-Space>"] = cmp.mapping.complete(),
-          ["<CR>"] = cmp.mapping.confirm({
-            behavior = cmp.ConfirmBehavior.Replace,
-            select = true,
-          }),
+          ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+          ["<CR>"] = cmp.mapping.confirm({ select = true }),
         }),
-        sources = {
+        sources = cmp.config.sources({
           { name = "nvim_lsp" },
           { name = "luasnip" },
-		  { name = "buffer" },
-		  
-        },
+          { name = "path" },
+          { name = "buffer" },
+        }),
+        completion = { completeopt = "menu,menuone,noselect" },
       })
-		  cmp.setup.filetype("go", {
-    sources = {
-      { name = "nvim_lsp" },
-      { name = "luasnip" },
-    },
-    mapping = cmp.mapping.preset.insert({
-      ["<C-y>"] = cmp.mapping.confirm({
-        behavior = cmp.ConfirmBehavior.Insert,
-        select = true,
-      }),
-    }),
-  })
-end,
-
+    end,
   },
-
-  {
-    "L3MON4D3/LuaSnip",
-    -- You can load it on InsertEnter or whenever you like
-    event = "InsertCharPre",
-  }
 }
-
